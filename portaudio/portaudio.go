@@ -6,9 +6,7 @@ import (
 	"github.com/benoit-pereira-da-silva/raffut/streams"
 	"github.com/gordonklaus/portaudio"
 	"io"
-	"log"
 	"math"
-	"os"
 )
 
 // PortAudio Streamable support.
@@ -30,7 +28,7 @@ type PortAudio struct {
 func (p *PortAudio) ReadStreamFrom(c io.Reader) error {
 	portaudio.Initialize()
 	defer portaudio.Terminate()
-	bs := make([]byte, p.ChunkSize*4)
+	bs := make([]byte, p.ChunkSize*4*p.channels)
 	floatBuffer := make([]float32, len(bs)/4)
 	stream, err := portaudio.OpenDefaultStream(0, p.channels, p.sampleRate, p.ChunkSize, func(out []float32) {
 		_, err := c.Read(bs)
@@ -55,20 +53,24 @@ func (p *PortAudio) ReadStreamFrom(c io.Reader) error {
 			}
 		}
 	})
-	chk(err)
-	chk(stream.Start())
+	if err != nil {
+		return err
+	}
+	sErr := stream.Start()
+	if sErr != nil {
+		return sErr
+	}
 	defer stream.Close()
 	for {
 		select {
 		case <-p.done:
-			chk(stream.Stop())
-			return nil
+			return stream.Stop()
 		}
 	}
 }
 
 func (p *PortAudio) WriteStreamTo(c io.Writer) error {
-	buffer := make([]float32, p.ChunkSize)
+	buffer := make([]float32, p.ChunkSize*p.channels)
 	byteBuffer := make([]byte, len(buffer)*4)
 	portaudio.Initialize()
 	defer portaudio.Terminate()
@@ -86,11 +88,10 @@ func (p *PortAudio) WriteStreamTo(c io.Writer) error {
 		} else {
 			_, err = c.Write(byteBuffer)
 			if err != nil {
-				// After one write there is always an error
-				// Explanation: https://stackoverflow.com/questions/46697799/golang-udp-connection-refused-on-every-other-write
-				// " Because UDP has no real connection and there is no ACK for any packets sent,
-				// the best a "connected" UDP socket can do to simulate a send failure is to save the ICMP response,
-				// and return it as an error on the next write."
+				// UDP has no real connection and no Acknowledgement on any packet transmission.
+				// If there is no receiver c.Write you get a "connection refused"
+				// This is not always the case.
+				println("ERROR:", err.Error())
 			} else {
 				if p.echo {
 					console.PrintFrame(sum)
@@ -99,14 +100,18 @@ func (p *PortAudio) WriteStreamTo(c io.Writer) error {
 		}
 
 	})
-	chk(err)
-	chk(stream.Start())
+	if err != nil {
+		return err
+	}
+	sErr := stream.Start()
+	if sErr != nil {
+		return sErr
+	}
 	defer stream.Close()
 	for {
 		select {
 		case <-p.done:
-			chk(stream.Stop())
-			return nil
+			return stream.Stop()
 		}
 	}
 }
@@ -137,13 +142,6 @@ func (p *PortAudio) Echo() bool {
 // Done is the cancellation channel
 func (p *PortAudio) Done() chan interface{} {
 	return p.done
-}
-
-func chk(err error) {
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
 }
 
 // bigEndianFloat32ToBytes should be faster than binary.Write(c, binary.BigEndian, &buffer)

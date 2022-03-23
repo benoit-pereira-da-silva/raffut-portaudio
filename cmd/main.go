@@ -19,7 +19,7 @@ func main() {
 		address := os.Args[2]
 		streamer := &portaudio.PortAudio{}
 		streamer.ChunkSize = udpChunkSize
-		streamer.Configure(address, sampleRate, 1, false, nil)
+		streamer.Configure(address, sampleRate, 2, false, nil)
 		switch subCmd {
 		case "receive":
 			// "raffut receive "192.168.1.4:8383"
