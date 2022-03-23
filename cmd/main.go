@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/benoit-pereira-da-silva/raffut/portaudio"
+	"github.com/benoit-pereira-da-silva/raffut-portaudio/portaudio"
 	"github.com/benoit-pereira-da-silva/raffut/streams"
 	"log"
 	"os"
@@ -18,7 +18,8 @@ func main() {
 		subCmd := strings.ToLower(os.Args[1])
 		address := os.Args[2]
 		streamer := &portaudio.PortAudio{}
-		streamer.Configure(address, udpChunkSize, sampleRate, false, nil)
+		streamer.ChunkSize = udpChunkSize
+		streamer.Configure(address, sampleRate, 1, false, nil)
 		switch subCmd {
 		case "receive":
 			// "raffut receive "192.168.1.4:8383"

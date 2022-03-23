@@ -1,5 +1,8 @@
 # raffut-portaudio
-Add PortAudio support for [raffut](https://github.com/benoit-pereira-da-silva/raffut)
+Added Raw PortAudio support for [raffut](https://github.com/benoit-pereira-da-silva/raffut)
+
+The portaudio flavour may be more efficient than miniaudio's.
+It allows to define the udp buffer size and may provide very low latency support.
 
 # build
 1. Install "portaudio".
