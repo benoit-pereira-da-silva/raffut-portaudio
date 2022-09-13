@@ -12,6 +12,7 @@ import (
 const sampleRate = 44100
 const udpChunkSize = 256
 
+// The main
 func main() {
 	var err error
 	if len(os.Args) > 2 {
